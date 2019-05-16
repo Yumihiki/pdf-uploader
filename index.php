@@ -2,12 +2,50 @@
 
 require_once 'DbManager.php';
 
-
 try {
   $db = getDb();
-  $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC";
 
-  $res = $db->query($sql);
+  // 1ページに10項目表示させる
+  $pagenationBaseNumber = 10;
+
+  // GETで現在のページ数を取得する（未入力の場合は1を挿入）
+  if (isset($_GET['page'])) {
+    $page = $_GET['page'];
+  } else {
+    $page = 1;
+  }
+
+  // スタートのポジションを計算する
+  if ($page > 1) {
+    $start = ($page * $pagenationBaseNumber) - $pagenationBaseNumber;
+  } else {
+    $start = 0;
+  }
+
+  // 参考:https://manablog.org/php-pagination/
+
+  // テーブルのデータ件数を取得する
+  // $sql = "SELECT COUNT(*) id FROM upload";
+  // $page_num = $db->prepare($sql);
+
+  // // postsテーブルのデータ件数を取得する
+  // $page_num = $db->prepare("
+  // 	SELECT COUNT(*) id
+  // 	FROM posts
+  // ");
+  // $page_num->execute();
+  // $page_num = $page_num->fetchColumn();
+
+  // true
+  // $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC LIMIT 0,10";
+  // $res = $db->query($sql);
+
+  // false
+  $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC LIMIT :start,10";
+  $stmt = $db->prepare($sql);
+  $stmt->bindValue(':start', $start);
+  $stmt->execute();
+  $res = $stmt->fetchAll();
 
 } catch (PDOException $e) {
   echo $e->getMessage();
@@ -29,6 +67,8 @@ try {
   </head>
   <body>
     <h1>PDF共有画面</h1>
+    <?php 
+     ?>
 
     <table class="table table-striped table-hove table-responsiver">
       <thead>

@@ -24,7 +24,9 @@ if ($_FILES['upfile']['error'] !== UPLOAD_ERR_OK) {
   $err_msg = '拡張子をPDFに無理やり変換しないでください';
 } else {
   $src = $_FILES['upfile']['tmp_name'];
-  $dest = mb_convert_encoding($_FILES['upfile']['name'], 'SJIS-WIN', 'UTF-8');
+  // 本と違う書き方
+  $dest = mb_convert_encoding($_FILES['upfile']['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
+
   if (!move_uploaded_file($src, 'pdf/'.$dest)) {
     $err_msg = 'アップロード処理に失敗しました';
   }
