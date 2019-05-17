@@ -21,7 +21,6 @@ try {
   } else {
     $start = 0;
   }
-
   // 参考:https://manablog.org/php-pagination/
 
   // テーブルのデータ件数を取得する
