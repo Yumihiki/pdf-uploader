@@ -23,18 +23,6 @@ try {
   }
   // 参考:https://manablog.org/php-pagination/
 
-  // テーブルのデータ件数を取得する
-  // $sql = "SELECT COUNT(*) id FROM upload";
-  // $page_num = $db->prepare($sql);
-
-  // // postsテーブルのデータ件数を取得する
-  // $page_num = $db->prepare("
-  // 	SELECT COUNT(*) id
-  // 	FROM posts
-  // ");
-  // $page_num->execute();
-  // $page_num = $page_num->fetchColumn();
-
   // true
   // $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC LIMIT 0,10";
   // $res = $db->query($sql);
@@ -45,6 +33,16 @@ try {
   $stmt->bindValue(':start', $start);
   $stmt->execute();
   $res = $stmt->fetchAll();
+
+  // テーブルのデータ件数を取得する
+  $sql = "SELECT COUNT(*) id FROM upload";
+  $page_num = $db->prepare($sql);
+
+  $page_num->execute();
+  $page_num = $page_num->fetchColumn();
+
+  $pagination = $page_num / 10;
+  $pagination = ceil($page_num / 10);
 
 } catch (PDOException $e) {
   echo $e->getMessage();
@@ -93,8 +91,13 @@ try {
         <?php endforeach ?>
       </tbody>
     </table>
-
-    <a href="upload.html">アップロードフォームへ移動</a>
+    <?php for ($x=1; $x <= $pagination ; $x++) : ?>
+	    <a href="?page=<?php echo $x ?>"><?php echo $x; ?></a>
+    <?php endfor ?>
+    
+    <div>
+      <a href="upload.html">アップロードフォームへ移動</a>
+    </div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
