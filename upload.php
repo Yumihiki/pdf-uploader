@@ -5,29 +5,37 @@ $ext = pathinfo($_FILES['upfile']['name']);
 // $perm = ['pdf'];
 
 class UploadFile {
-  private $error = '';
-  private $type = '';
+  private $error;
+  private $type;
   private $perm = ['pdf'];
+  private $dest;
 
-  public function __construct($error,$type,$ext) {
+  public function __construct($error,$type,$ext,$dest) {
     $this->setError($error);
+    $this->validation($error);
     $this->setType($type);
     $this->setExt($ext);
+    $this->dest($dest);
+    $this->typeCheck($type);
   }
 
   public function setError($error) {
-    $this->uploadFile;
+    $this->uploadFile = $error;
   }
 
   public function setType($type) {
-    $this->type;
+    $this->type = $type;
   }
 
   public function setExt($ext) {
-    $this->ext;
+    $this->ext = $ext;
   }
 
-  public function validation() {
+  public function setDest($dest) {
+    $this->dest = $dest;
+  }
+
+  public function validation($error) {
     $msg = '';
     if($error !== UPLOAD_ERR_OK) {
       $msg = [
@@ -40,7 +48,7 @@ class UploadFile {
         UPLOAD_ERR_EXTENSION  => '拡張モジュールによってアップロードが中断されました',
       ];    
 
-      $err_msg = $msg[$error];
+      return $err_msg = $msg[$error];
     }
 
     // } else {
@@ -54,25 +62,35 @@ class UploadFile {
     // }
   }
 
-  public function extCheck() {
+  public function extCheck($ext,$perm) {
     if(!in_array(strtolower($ext['extension']), $perm)) {
-      $err_msg = 'PDF以外のファイルはアップロードできません';
+      return $err_msg = 'PDF以外のファイルはアップロードできません';
     }
   }
 
-  public function typeCheck() {
+  public function typeCheck($type) {
     if($type !== 'application/pdf') {
-      $err_msg = '拡張子を無理やりPDFにしないでください';
+      return $err_msg = '拡張子を無理やりPDFにしないでください';
     }
+  }
+
+  public function getDest() {
+    return $this->setDest;
+  }
+
+  public function dest($dest) {
+    return $dest = mb_convert_encoding($dest, 'UTF-8', "JIS, eucjp-win, sjis-win");
   }
 
 
 }
-$a = new UploadFile($_FILES['upfile']['error'],$_FILES['upfile']['type'],pathinfo($_FILES['upfile']['name']));
+$a = new UploadFile($_FILES['upfile']['error'],$_FILES['upfile']['type'],pathinfo($_FILES['upfile']['name']),$_FILES['upfile']['name']);
 
-$a->validation();
-$a->extCheck();
-$a->typeCheck();
+// $a->validation();
+// $a->extCheck();
+// $a->typeCheck();
+// エラー(コンストラクタで宣言したから)
+// $a->dest($_FILES['upfile']['name']);
 
 
 if (isset($err_msg)) {
@@ -96,11 +114,11 @@ try {
 
   $ip = $_SERVER['REMOTE_ADDR'];
 
-  $params = array(
+  $params = [
     ':name' => $dest,
     ':ip'   => $ip,
     ':path' => 'pdf/' . $dest
-  );
+  ];
 
   $stmt->execute($params);
 
