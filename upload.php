@@ -15,7 +15,7 @@ class UploadFile {
     $this->validation($error);
     $this->setType($type);
     $this->setExt($ext);
-    $this->dest($dest);
+    // $this->dest($dest);
     $this->typeCheck($type);
   }
 
@@ -79,7 +79,7 @@ class UploadFile {
   }
 
   public function dest($dest) {
-    return $dest = mb_convert_encoding($dest, 'UTF-8', "JIS, eucjp-win, sjis-win");
+    return mb_convert_encoding($dest, 'UTF-8', "JIS, eucjp-win, sjis-win");
   }
 
 
@@ -110,14 +110,17 @@ try {
 
   $stmt = $db->prepare($sql);
 
-  $dest = mb_convert_encoding($_FILES['upfile']['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
+  $b = new UploadFile($_FILES['upfile']['error'],$_FILES['upfile']['type'],pathinfo($_FILES['upfile']['name']),$_FILES['upfile']['name']);
+  $c = $b->dest($_FILES['upfile']['name']);
+
+  // $dest = mb_convert_encoding($_FILES['upfile']['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
 
   $ip = $_SERVER['REMOTE_ADDR'];
 
   $params = [
-    ':name' => $dest,
+    ':name' => $c,
     ':ip'   => $ip,
-    ':path' => 'pdf/' . $dest
+    ':path' => 'pdf/' . $c
   ];
 
   $stmt->execute($params);
