@@ -1,43 +1,36 @@
 <?php
 
-$ext = pathinfo($_FILES['upfile']['name']);
-
-// $perm = ['pdf'];
-
 class UploadFile {
-  private $error;
-  private $type;
-  private $perm = ['pdf'];
+  private $file;
+  private $errors = [];
+  private $ext;
+  private $perm = 'pdf';
+  private $src;
+  private $ipAddress;
   private $dest;
+  private $msg = [];
 
-  public function __construct($error,$type,$ext,$dest) {
-    $this->setError($error);
-    $this->validation($error);
-    $this->setType($type);
-    $this->setExt($ext);
-    // $this->dest($dest);
-    $this->typeCheck($type);
+  // $_FILES[$name]の存在チェック(のはず?)
+  public function __construct($name) 
+  {
+    $this->file = isset($_FILES[$name]) ? $_FILES[$name] : null;
+    // 三項演算子
+    // https://www.php.net/manual/ja/language.operators.comparison.php#language.operators.comparison.ternary
+    // $_FILES[$name]がissetであれば $this->file = $_FILES[$name]としてissetでなければ$this->file =nullとする
   }
+  // 想定では、$this->file は $_FILES['upfile']となっているつもり
 
-  public function setError($error) {
-    $this->uploadFile = $error;
-  }
-
-  public function setType($type) {
-    $this->type = $type;
-  }
-
-  public function setExt($ext) {
-    $this->ext = $ext;
-  }
-
-  public function setDest($dest) {
-    $this->dest = $dest;
-  }
-
-  public function validation($error) {
-    $msg = '';
-    if($error !== UPLOAD_ERR_OK) {
+  /**
+   * 指定されたアップロードファイルのバリデーション判定
+   * 
+   * return bool true: エラーなし, false: エラーあり
+   * 
+   */
+  public function valid()
+  {
+    // エラーチェック。エラーがある場合、$this->errorsにエラーメッセージを追加する
+    // エラーなしの場合、return true。エラーがある場合、return false
+    if($this->file['error'] !== UPLOAD_ERR_OK ) {
       $msg = [
         UPLOAD_ERR_INI_SIZE   => 'php.iniのupload_max_filesize制限を超えています。',
         UPLOAD_ERR_FORM_SIZE  => 'HTMLのMAX_FILE_SIZE制限を超えています',
@@ -46,90 +39,91 @@ class UploadFile {
         UPLOAD_ERR_NO_TMP_DIR => '一時フォルダが存在しません',
         UPLOAD_ERR_CANT_WRITE => 'ディスクへの書き込みに失敗しました',
         UPLOAD_ERR_EXTENSION  => '拡張モジュールによってアップロードが中断されました',
-      ];    
+      ];
+      ext();
+      $this->errors = $msg[$this->file['error']];
+      return false;
+    } elseif (!in_array(strtolower($ext['extension']), $perm)) {
+      $this->errors = 'PDF以外のファイルはアップロードできません';
+      return false;
+    } elseif ($this->file['type'] !== 'application/pdf') {
+      $this->errors = '拡張子を無理にPDFに変換しないでください';
+      return false;
+    } else {
+      $src = $this->file['tmp_name'];
+      $dest = mb_convert_encoding($this->file['name'], 'UTF-8', 'JIS, eucjp-win, sjis-win');
 
-      return $err_msg = $msg[$error];
+      if (!move_uploaded_file($src, 'pdf/' . $dest)) {
+        $this->errors = 'アップロード処理に失敗しました';
+        return false;
+      } 
     }
 
-    // } else {
-    //   $src = $_FILES['upfile']['tmp_name'];
-    //   // 本と違う書き方
-    //   $dest = mb_convert_encoding($_FILES['upfile']['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
-    
-    //   if (!move_uploaded_file($src, 'pdf/'.$dest)) {
-    //     $err_msg = 'アップロード処理に失敗しました';
-    //   }
-    // }
+    return true;
   }
 
-  public function extCheck($ext,$perm) {
-    if(!in_array(strtolower($ext['extension']), $perm)) {
-      return $err_msg = 'PDF以外のファイルはアップロードできません';
+  /**
+   * 保存したファイルのパスを返却する
+   */
+  public function desc()
+  {
+    return $this->path = mb_convert_encoding($this->file['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
+  }
+  
+  public function getErrors()
+  {
+    return $this->errors;
+  }
+
+  public function ext()
+  {
+    $this->ext = pathinfo($this->file['name']);
+  }
+
+  public function getIpAddress() {
+    if(!is_null($_SERVER['REMOTE_ADDR'])) {
+      $this->ipAddress = $_SERVER['REMOTE_ADDR'];
     }
   }
 
-  public function typeCheck($type) {
-    if($type !== 'application/pdf') {
-      return $err_msg = '拡張子を無理やりPDFにしないでください';
-    }
-  }
-
-  public function getDest() {
-    return $this->setDest;
-  }
-
-  public function dest($dest) {
-    return mb_convert_encoding($dest, 'UTF-8', "JIS, eucjp-win, sjis-win");
-  }
-
-
-}
-$a = new UploadFile($_FILES['upfile']['error'],$_FILES['upfile']['type'],pathinfo($_FILES['upfile']['name']),$_FILES['upfile']['name']);
-
-// $a->validation();
-// $a->extCheck();
-// $a->typeCheck();
-// エラー(コンストラクタで宣言したから)
-// $a->dest($_FILES['upfile']['name']);
-
-
-if (isset($err_msg)) {
-  die($err_msg);
 }
 
-require_once 'DbManager.php';
+$file = new UploadFile('upfile');
 
-try {
-  $db = getDb();
-
-  $sql = "INSERT INTO upload(
-    name,date,ip,path,time
-  ) VALUES (
-    :name,date('now'),:ip,:path,time('now')
-  )";
-
-  $stmt = $db->prepare($sql);
-
-  $b = new UploadFile($_FILES['upfile']['error'],$_FILES['upfile']['type'],pathinfo($_FILES['upfile']['name']),$_FILES['upfile']['name']);
-  $c = $b->dest($_FILES['upfile']['name']);
-
-  // $dest = mb_convert_encoding($_FILES['upfile']['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
-
-  $ip = $_SERVER['REMOTE_ADDR'];
-
-  $params = [
-    ':name' => $c,
-    ':ip'   => $ip,
-    ':path' => 'pdf/' . $c
-  ];
-
-  $stmt->execute($params);
-
-} catch (PDOException $e) {
-  echo $e->getMessage();
+if($file->valid())
+{
+  // エラーがなければDBに登録
+  require_once 'DbManager.php';
+  
+  try {
+    $db = getDb();
+  
+    $sql = "INSERT INTO upload(
+      name,date,ip,path,time
+    ) VALUES (
+      :name,date('now'),:ip,:path,time('now')
+    )";
+  
+    $stmt = $db->prepare($sql);
+  
+    $params = [
+      ':name' => $file->desc(),
+      ':ip'   => $file->getIpAddress(),
+      ':path' => 'pdf/' . $file->desc(),
+    ];
+  
+    $stmt->execute($params);
+  
+  } catch (PDOException $e) {
+    echo $e->getMessage();
+  }
+  
+  header('Location:' .dirname($_SERVER['PHP_SELF']).'/index.php' );  
+  
+} else {
+  echo 'else';
+  echo getErrors();
 }
-
-header('Location:' .dirname($_SERVER['PHP_SELF']).'/index.php' );
 
 // 参考出典: 山田 祥寛著 独習PHP 第3版 P346-
 // https://www.deep-blog.jp/engineer/archives/9603/
