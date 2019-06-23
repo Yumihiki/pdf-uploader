@@ -7,12 +7,7 @@ class UploadFile {
   private $src;
   private $dest;
 
-  public  function setExt()
-  {
-    $ext = pathinfo($_FILES['upfile']['name']);
-  }
-
-  const   msg = [];
+  const   PERM = ['pdf'];
   // const   perm = ['pdf'];
 
   // $_FILES[$name]の存在チェック(のはず?)
@@ -37,7 +32,6 @@ class UploadFile {
   {
     // エラーチェック。エラーがある場合、$this->errorsにエラーメッセージを追加する
     // エラーなしの場合、return true。エラーがある場合、return false
-    $ext = pathinfo($_FILES['upfile']['name']['extension']);
 
     if($this->file['error'] !== UPLOAD_ERR_OK ) 
     {
@@ -53,7 +47,7 @@ class UploadFile {
       $this->errors = $msg[$this->file['error']];
       return false;
     } 
-    elseif (!in_array(strtolower($this->ext['extension']), ['pdf'])) 
+    elseif (!in_array(strtolower($this->ext['extension']), self::PERM)) 
     {
       $this->errors = 'PDF以外のファイルはアップロードできません';
       return false;
@@ -89,11 +83,6 @@ class UploadFile {
   public function getErrors()
   {
     return $this->errors;
-  }
-
-  public function getExt()
-  {
-    return $this->ext['extension'];
   }
 
 }
