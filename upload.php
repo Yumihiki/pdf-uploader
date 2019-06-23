@@ -13,7 +13,7 @@ class UploadFile {
   }
 
   const   msg = [];
-  const   perm = 'pdf';
+  // const   perm = ['pdf'];
 
   // $_FILES[$name]の存在チェック(のはず?)
   public function __construct($name) 
@@ -53,14 +53,11 @@ class UploadFile {
       $this->errors = $msg[$this->file['error']];
       return false;
     } 
-    // ここがうまく動いていない
-    // elseif (!in_array(strtolower($ext), 'pdf')) 
-    // {
-    //   // $this->errors = $this->getExt['extension'];
-    //   // $this->errors = 'PDF以外のファイルはアップロードできません';
-    //   $this->errors = pathinfo($_FILES['upfile']['name']['extension']);
-    //   return false;
-    // } 
+    elseif (!in_array(strtolower($this->ext['extension']), ['pdf'])) 
+    {
+      $this->errors = 'PDF以外のファイルはアップロードできません';
+      return false;
+    } 
     elseif ($this->file['type'] !== 'application/pdf') 
     {
       $this->errors = '拡張子を無理にPDFに変換しないでください';
@@ -96,7 +93,7 @@ class UploadFile {
 
   public function getExt()
   {
-    return $this->ext;
+    return $this->ext['extension'];
   }
 
 }
@@ -147,7 +144,7 @@ if($file->valid())
 } 
 else 
 {
-  var_dump($file->getErrors());
+  echo $file->getErrors();
 }
 
 // 参考出典: 山田 祥寛著 独習PHP 第3版 P346-
