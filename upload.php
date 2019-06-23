@@ -4,16 +4,23 @@ class UploadFile {
   private $file;
   private $errors = [];
   private $ext;
-  private $perm = 'pdf';
   private $src;
-  private $ipAddress;
   private $dest;
-  private $msg = [];
+
+  public  function setExt()
+  {
+    $ext = pathinfo($_FILES['upfile']['name']);
+  }
+
+  const   msg = [];
+  const   perm = 'pdf';
 
   // $_FILES[$name]の存在チェック(のはず?)
   public function __construct($name) 
   {
     $this->file = isset($_FILES[$name]) ? $_FILES[$name] : null;
+    $this->ext = pathinfo($this->file['name']);
+    
     // 三項演算子
     // https://www.php.net/manual/ja/language.operators.comparison.php#language.operators.comparison.ternary
     // $_FILES[$name]がissetであれば $this->file = $_FILES[$name]としてissetでなければ$this->file =nullとする
@@ -30,7 +37,10 @@ class UploadFile {
   {
     // エラーチェック。エラーがある場合、$this->errorsにエラーメッセージを追加する
     // エラーなしの場合、return true。エラーがある場合、return false
-    if($this->file['error'] !== UPLOAD_ERR_OK ) {
+    $ext = pathinfo($_FILES['upfile']['name']['extension']);
+
+    if($this->file['error'] !== UPLOAD_ERR_OK ) 
+    {
       $msg = [
         UPLOAD_ERR_INI_SIZE   => 'php.iniのupload_max_filesize制限を超えています。',
         UPLOAD_ERR_FORM_SIZE  => 'HTMLのMAX_FILE_SIZE制限を超えています',
@@ -40,25 +50,33 @@ class UploadFile {
         UPLOAD_ERR_CANT_WRITE => 'ディスクへの書き込みに失敗しました',
         UPLOAD_ERR_EXTENSION  => '拡張モジュールによってアップロードが中断されました',
       ];
-      ext();
       $this->errors = $msg[$this->file['error']];
       return false;
-    } elseif (!in_array(strtolower($ext['extension']), $perm)) {
-      $this->errors = 'PDF以外のファイルはアップロードできません';
-      return false;
-    } elseif ($this->file['type'] !== 'application/pdf') {
+    } 
+    // ここがうまく動いていない
+    // elseif (!in_array(strtolower($ext), 'pdf')) 
+    // {
+    //   // $this->errors = $this->getExt['extension'];
+    //   // $this->errors = 'PDF以外のファイルはアップロードできません';
+    //   $this->errors = pathinfo($_FILES['upfile']['name']['extension']);
+    //   return false;
+    // } 
+    elseif ($this->file['type'] !== 'application/pdf') 
+    {
       $this->errors = '拡張子を無理にPDFに変換しないでください';
       return false;
-    } else {
+    } 
+    else 
+    {
       $src = $this->file['tmp_name'];
       $dest = mb_convert_encoding($this->file['name'], 'UTF-8', 'JIS, eucjp-win, sjis-win');
 
-      if (!move_uploaded_file($src, 'pdf/' . $dest)) {
+      if (!move_uploaded_file($src, 'pdf/' . $dest)) 
+      {
         $this->errors = 'アップロード処理に失敗しました';
         return false;
       } 
-    }
-
+    } 
     return true;
   }
 
@@ -67,7 +85,8 @@ class UploadFile {
    */
   public function desc()
   {
-    return $this->path = mb_convert_encoding($this->file['name'], 'UTF-8', "JIS, eucjp-win, sjis-win");
+    // $this->file['name']の文字コードを'UTF-8'に変換する
+    return $this->path = mb_convert_encoding($this->file['name'], 'UTF-8');
   }
   
   public function getErrors()
@@ -75,17 +94,19 @@ class UploadFile {
     return $this->errors;
   }
 
-  public function ext()
+  public function getExt()
   {
-    $this->ext = pathinfo($this->file['name']);
+    return $this->ext;
   }
 
-  public function getIpAddress() {
-    if(!is_null($_SERVER['REMOTE_ADDR'])) {
-      $this->ipAddress = $_SERVER['REMOTE_ADDR'];
-    }
-  }
+}
 
+function getIpAddress() 
+{
+  if(!is_null($_SERVER['REMOTE_ADDR'])) 
+  {
+    return $_SERVER['REMOTE_ADDR'];
+  }
 }
 
 $file = new UploadFile('upfile');
@@ -95,7 +116,8 @@ if($file->valid())
   // エラーがなければDBに登録
   require_once 'DbManager.php';
   
-  try {
+  try 
+  {
     $db = getDb();
   
     $sql = "INSERT INTO upload(
@@ -108,21 +130,24 @@ if($file->valid())
   
     $params = [
       ':name' => $file->desc(),
-      ':ip'   => $file->getIpAddress(),
+      ':ip'   => getIpAddress(),
       ':path' => 'pdf/' . $file->desc(),
     ];
   
     $stmt->execute($params);
   
-  } catch (PDOException $e) {
+  } 
+  catch (PDOException $e) 
+  {
     echo $e->getMessage();
   }
   
   header('Location:' .dirname($_SERVER['PHP_SELF']).'/index.php' );  
   
-} else {
-  echo 'else';
-  echo getErrors();
+} 
+else 
+{
+  var_dump($file->getErrors());
 }
 
 // 参考出典: 山田 祥寛著 独習PHP 第3版 P346-
