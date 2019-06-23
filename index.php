@@ -21,31 +21,19 @@ try {
   } else {
     $start = 0;
   }
-
   // 参考:https://manablog.org/php-pagination/
 
-  // テーブルのデータ件数を取得する
-  // $sql = "SELECT COUNT(*) id FROM upload";
-  // $page_num = $db->prepare($sql);
-
-  // // postsテーブルのデータ件数を取得する
-  // $page_num = $db->prepare("
-  // 	SELECT COUNT(*) id
-  // 	FROM posts
-  // ");
-  // $page_num->execute();
-  // $page_num = $page_num->fetchColumn();
-
-  // true
-  // $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC LIMIT 0,10";
-  // $res = $db->query($sql);
-
-  // false
   $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC LIMIT :start,10";
   $stmt = $db->prepare($sql);
   $stmt->bindValue(':start', $start);
   $stmt->execute();
   $res = $stmt->fetchAll();
+
+  $sql = "SELECT COUNT(*) id FROM upload";
+  $pageNum = $db->query($sql);  
+  $pageNum = $pageNum->fetchColumn();
+
+  $pagination = ceil($pageNum / 10);
 
 } catch (PDOException $e) {
   echo $e->getMessage();
@@ -84,18 +72,23 @@ try {
       <tbody>
         <?php foreach($res as $value) :?>
           <tr>
-            <th><?php echo $value['id'] ?></th>
-            <th><a href="<?php echo $value['path'] ?>"><?php echo $value['name'] ?></a></th>
-            <th><?php echo $value['date'] ?></th>
-            <th><?php echo $value['time'] ?></th>
-            <th><?php echo $value['ip'] ?></th>
+            <th><?= $value['id'] ?></th>
+            <th><a href="<?= $value['path'] ?>"><?= $value['name'] ?></a></th>
+            <th><?= $value['date'] ?></th>
+            <th><?= $value['time'] ?></th>
+            <th><?= $value['ip'] ?></th>
             <th>編集</th>
           </tr>
         <?php endforeach ?>
       </tbody>
     </table>
-
-    <a href="upload.html">アップロードフォームへ移動</a>
+    <?php for ($x=1; $x <= $pagination ; $x++) : ?>
+	    <a href="?page=<?= $x ?>"><?= $x; ?></a>
+    <?php endfor ?>
+    
+    <div>
+      <p><a href="upload.html">アップロードフォームへ移動</a></p>
+    </div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
