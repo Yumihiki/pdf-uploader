@@ -1,45 +1,7 @@
 <?php
-
-require_once 'DbManager.php';
-
-try {
-  $db = getDb();
-
-  // 1ページに10項目表示させる
-  $pagenationBaseNumber = 10;
-
-  // GETで現在のページ数を取得する（未入力の場合は1を挿入）
-  if (isset($_GET['page'])) {
-    $page = $_GET['page'];
-  } else {
-    $page = 1;
-  }
-
-  // スタートのポジションを計算する
-  if ($page > 1) {
-    $start = ($page * $pagenationBaseNumber) - $pagenationBaseNumber;
-  } else {
-    $start = 0;
-  }
-  // 参考:https://manablog.org/php-pagination/
-
-  $sql = "SELECT id,name,date(date,'localtime') as date,ip,time(time,'localtime') as time,path FROM upload ORDER BY id DESC LIMIT :start,10";
-  $stmt = $db->prepare($sql);
-  $stmt->bindValue(':start', $start);
-  $stmt->execute();
-  $res = $stmt->fetchAll();
-
-  $sql = "SELECT COUNT(*) id FROM upload";
-  $pageNum = $db->query($sql);  
-  $pageNum = $pageNum->fetchColumn();
-
-  $pagination = ceil($pageNum / 10);
-
-} catch (PDOException $e) {
-  echo $e->getMessage();
-}
-
+// 検索の実行結果を書く
 ?>
+
 
 <!doctype html>
 <html lang="ja">

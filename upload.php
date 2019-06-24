@@ -8,7 +8,6 @@ class UploadFile {
   private $dest;
 
   const   PERM = ['pdf'];
-  // const   perm = ['pdf'];
 
   // $_FILES[$name]の存在チェック(のはず?)
   public function __construct($name) 
@@ -84,6 +83,7 @@ class UploadFile {
   {
     return $this->errors;
   }
+
 
 }
 
